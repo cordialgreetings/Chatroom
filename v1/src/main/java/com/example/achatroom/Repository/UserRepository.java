@@ -12,15 +12,15 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 @Repository
-public class UserRepository{
+public class UserRepository {
     private final ConnectionPool connectionPool;
 
     @Autowired
-    public UserRepository(ConnectionPool connectionPool){
+    public UserRepository(ConnectionPool connectionPool) {
         this.connectionPool = connectionPool;
     }
 
-    public Mono<Void> createUser(UserPO userPO){
+    public Mono<Void> createUser(UserPO userPO) {
         return connectionPool.create()
                 .flatMap(connection ->
                         Mono.from(connection.createStatement("replace into `user` values (?,?,?,?,?,?)")
@@ -31,11 +31,11 @@ public class UserRepository{
                 .then();
     }
 
-    public Mono<Boolean> login(String username, String password){
+    public Mono<String> login(String username) {
         return connectionPool.create()
-                .flatMap(connection -> Mono.from(connection.createStatement("select password=? from user where username=?")
-                        .bind(0, password).bind(1,username).execute()))
-                .flatMap(body-> Mono.from(body.map(((row, rowMetadata) -> row.get(0, Integer.class)))).map(i->i==1));
+                .flatMap(connection -> Mono.from(connection.createStatement("select password from user where username=?")
+                        .bind(0, username).execute()))
+                .flatMap(body -> Mono.from(body.map(((row, rowMetadata) -> row.get(0, String.class)))));
     }
 
 }

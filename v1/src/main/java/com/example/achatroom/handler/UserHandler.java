@@ -10,6 +10,8 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 
 @Service
 public class UserHandler {
@@ -31,16 +33,21 @@ public class UserHandler {
 
     public Mono<ServerResponse> login(ServerRequest serverRequest) {
         return Mono.just(serverRequest.queryParams())
-                .flatMap(body->{
-                    String username=body.getFirst("username");
-                    String password=body.getFirst("password");
-                    return userRepository.login(username, password)
-                            .doOnNext(System.out::println);
-//                            .map(pwd-> pwd.equals(password));
-                })
-                .flatMap(validated->validated
-                        ?ServerResponse.status(HttpStatus.OK).build()
-                        :ServerResponse.status(HttpStatus.BAD_REQUEST).build());
+                .flatMap(body -> {
+                    List<String> list = body.get("username");
+                    if(list == null || list.isEmpty()){
+                        return ServerResponse.status(HttpStatus.BAD_REQUEST).build();
+                    }
+                    String username=list.get(0);
+                    list = body.get("password");
+                    if(list == null || list.isEmpty()){
+                        return ServerResponse.status(HttpStatus.BAD_REQUEST).build();
+                    }
+                    String password = list.get(0);
+                    return userRepository.login(username).flatMap(pwd -> pwd.equals(password)
+                            ? ServerResponse.status(HttpStatus.OK).build()
+                            : ServerResponse.status(HttpStatus.BAD_REQUEST).build());
+                });
     }
 
     public Mono<ServerResponse> getUserInfo(ServerRequest serverRequest) {
