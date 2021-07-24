@@ -31,16 +31,16 @@ public class UserHandler {
 
     public Mono<ServerResponse> login(ServerRequest serverRequest) {
         return Mono.just(serverRequest.queryParams())
-                .doOnNext(body->{
+                .flatMap(body->{
                     String username=body.getFirst("username");
                     String password=body.getFirst("password");
-                    assert username != null;
-//                    userRepository.count().subscribe(System.out::println);
-//                    userRepository.login(username, password)
-//                            .subscribe(System.out::println);
+                    return userRepository.login(username, password)
+                            .doOnNext(System.out::println);
+//                            .map(pwd-> pwd.equals(password));
                 })
-                .doOnNext(System.out::println)
-                .flatMap(body->ServerResponse.status(HttpStatus.OK).build());
+                .flatMap(validated->validated
+                        ?ServerResponse.status(HttpStatus.OK).build()
+                        :ServerResponse.status(HttpStatus.BAD_REQUEST).build());
     }
 
     public Mono<ServerResponse> getUserInfo(ServerRequest serverRequest) {
