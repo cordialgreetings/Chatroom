@@ -48,7 +48,7 @@ public class UserHandler {
                     }
                     String password = list.get(0);
                     return userRepository.login(username).flatMap(pwd -> pwd.equals(password)
-                            ? ServerResponse.status(HttpStatus.OK).build()
+                            ? ServerResponse.status(HttpStatus.OK).body(jwtAuthComponent.getToken(username),String.class)
                             : ServerResponse.status(HttpStatus.BAD_REQUEST).build());
                 });
     }

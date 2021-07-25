@@ -11,14 +11,4 @@ public class UserPO implements Serializable {
     String email;
     String password;
     String phone;
-
-    @Override
-    public String toString(){
-        return "username: "+username+"\n"
-                +"firstName: "+firstName+"\n"
-                +"lastName: "+lastName+"\n"
-                +"email: "+email+"\n"
-                +"password: "+password+"\n"
-                +"phone: "+phone;
-    }
 }

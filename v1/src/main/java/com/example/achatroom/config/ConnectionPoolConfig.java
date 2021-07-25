@@ -5,6 +5,9 @@ import io.r2dbc.pool.ConnectionPoolConfiguration;
 import io.r2dbc.spi.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
 
@@ -18,5 +21,15 @@ public class ConnectionPoolConfig {
                 .initialSize(3)
                 .maxSize(10)
                 .build());
+    }
+
+    @Bean
+    Mono<Connection> connectionMono(){
+        return connectionPool().create();
+    }
+
+    @Bean
+    Scheduler boundedElastic(){
+        return Schedulers.boundedElastic();
     }
 }
