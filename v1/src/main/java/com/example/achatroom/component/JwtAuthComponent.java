@@ -3,6 +3,7 @@ package com.example.achatroom.component;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -16,8 +17,8 @@ public class JwtAuthComponent {
     private final JwtBuilder builder = Jwts.builder();
     private final JwtParser parser = Jwts.parserBuilder().setSigningKey(key).build();
 
-    public String getToken(String username) {
-        return builder.setSubject(username).signWith(key).compact();
+    public Mono<String> getToken(Mono<String> username) {
+        return username.map(s -> builder.setSubject(s).signWith(key).compact());
     }
 
     public String validate(String bearerToken) {
