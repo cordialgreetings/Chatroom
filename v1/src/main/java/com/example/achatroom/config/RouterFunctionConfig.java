@@ -2,7 +2,6 @@ package com.example.achatroom.config;
 
 import com.example.achatroom.filter.BearerTokenFilter;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.server.RouterFunction;
@@ -43,7 +42,5 @@ public class RouterFunctionConfig {
                 .filter(bearerTokenFilter)
                 .andRoute(POST("/user"), userHandler::createUser)
                 .andRoute(GET("/userLogin"), userHandler::login);
-
     }
-
 }

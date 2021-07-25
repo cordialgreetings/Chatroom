@@ -1,8 +1,8 @@
 package com.example.achatroom.Repository;
 
+import com.example.achatroom.BO.UserBO;
 import com.example.achatroom.PO.UserPO;
 
-import io.r2dbc.pool.ConnectionPool;
 import io.r2dbc.spi.Connection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -14,8 +14,9 @@ import reactor.core.scheduler.Scheduler;
 public class UserRepository {
     public final Mono<Connection> connectionMono;
     public final Scheduler scheduler;
-    public static final String loginSQl="select password from user where username=?";
+    public static final String loginSQl="select password from `user` where username=?";
     public static final String createUserSQL = "replace into `user` values (?,?,?,?,?,?)";
+    public static final String getUserInfoSQL = "select firstName, lastName, email, phone from `user` where username=?";
 
     @Autowired
     public UserRepository(Mono<Connection> connectionMono, Scheduler boundedElastic) {
@@ -39,7 +40,18 @@ public class UserRepository {
                 Mono.from(connection.createStatement(loginSQl)
                         .bind(0, username).execute())
                         .doFinally(signalType -> Mono.from(connection.close()).subscribe()))
-                .flatMap(result -> Mono.from(result.map(((row, rowMetadata) -> row.get(0, String.class)))))
+                .flatMap(result -> Mono.from(result.map((row, rowMetadata) -> row.get(0, String.class))))
+                .subscribeOn(scheduler);
+    }
+
+    public Mono<UserBO> getUserInfo(String username){
+        return connectionMono.flatMap(connection ->
+                Mono.from(connection.createStatement(getUserInfoSQL)
+                        .bind(0, username).execute())
+                        .doFinally(signalType -> Mono.from(connection.close()).subscribe()))
+                .flatMap(result -> Mono.from(result.map((row, rowMetadata) ->
+                        new UserBO(row.get(0, String.class), row.get(1, String.class),
+                                row.get(2, String.class), row.get(3, String.class)))))
                 .subscribeOn(scheduler);
     }
 
