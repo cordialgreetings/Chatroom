@@ -39,7 +39,7 @@ public class UserRepository {
                 Mono.from(connection.createStatement(loginSQl)
                         .bind(0, username).execute())
                         .doFinally(signalType -> Mono.from(connection.close()).subscribe()))
-                .flatMap(body -> Mono.from(body.map(((row, rowMetadata) -> row.get(0, String.class)))))
+                .flatMap(result -> Mono.from(result.map(((row, rowMetadata) -> row.get(0, String.class)))))
                 .subscribeOn(scheduler);
     }
 

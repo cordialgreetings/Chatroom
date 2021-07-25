@@ -18,8 +18,6 @@ public class ConnectionPoolConfig {
         return new ConnectionPool(ConnectionPoolConfiguration.builder(
                 ConnectionFactories.get("r2dbcs:mysql://root:950801@localhost:3306/chatroom"))
                 .maxAcquireTime(Duration.ofMillis(1000))
-                .initialSize(3)
-                .maxSize(10)
                 .build());
     }
 
