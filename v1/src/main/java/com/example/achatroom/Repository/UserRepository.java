@@ -9,7 +9,6 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
-
 @Repository
 public class UserRepository {
     public final Mono<Connection> connectionMono;
@@ -31,15 +30,15 @@ public class UserRepository {
                         .bind(2, userPO.getLastName()).bind(3, userPO.getEmail())
                         .bind(4, userPO.getPassword()).bind(5, userPO.getPhone())
                         .execute()
-                    ).doFinally(signalType -> Mono.from(connection.close()).subscribe())
-                ).subscribeOn(scheduler).then();
+                    ).doFinally(signalType -> ((Mono<Void>)connection.close()).subscribe())
+                ).then().subscribeOn(scheduler);
     }
 
     public Mono<String> login(String username) {
         return connectionMono.flatMap(connection ->
                 Mono.from(connection.createStatement(loginSQl)
                         .bind(0, username).execute())
-                        .doFinally(signalType -> Mono.from(connection.close()).subscribe()))
+                        .doFinally(signalType -> ((Mono<Void>)connection.close()).subscribe()))
                 .flatMap(result -> Mono.from(result.map((row, rowMetadata) -> row.get(0, String.class))))
                 .subscribeOn(scheduler);
     }
@@ -48,7 +47,7 @@ public class UserRepository {
         return connectionMono.flatMap(connection ->
                 Mono.from(connection.createStatement(getUserInfoSQL)
                         .bind(0, username).execute())
-                        .doFinally(signalType -> Mono.from(connection.close()).subscribe()))
+                        .doFinally(signalType -> ((Mono<Void>)connection.close()).subscribe()))
                 .flatMap(result -> Mono.from(result.map((row, rowMetadata) ->
                         new UserBO(row.get(0, String.class), row.get(1, String.class),
                                 row.get(2, String.class), row.get(3, String.class)))))

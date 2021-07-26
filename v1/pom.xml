@@ -17,20 +17,27 @@
         <java.version>11</java.version>
     </properties>
     <dependencies>
-<!--        &lt;!&ndash;r2dbc mysql 库&ndash;&gt;-->
-<!--        <dependency>-->
-<!--            <groupId>dev.miku</groupId>-->
-<!--            <artifactId>r2dbc-mysql</artifactId>-->
-<!--        </dependency>-->
+        <!--r2dbc mysql 库-->
+        <dependency>
+            <groupId>dev.miku</groupId>
+            <artifactId>r2dbc-mysql</artifactId>
+        </dependency>
         <dependency>
             <groupId>io.r2dbc</groupId>
             <artifactId>r2dbc-pool</artifactId>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.github.jasync-sql</groupId>-->
+<!--            <artifactId>jasync-r2dbc-mysql</artifactId>-->
+<!--            <version>1.2.1</version>-->
+<!--        </dependency>-->
+        <!-- https://mvnrepository.com/artifact/org.jetbrains/annotations -->
         <dependency>
-            <groupId>com.github.jasync-sql</groupId>
-            <artifactId>jasync-r2dbc-mysql</artifactId>
-            <version>1.2.1</version>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>21.0.1</version>
         </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
