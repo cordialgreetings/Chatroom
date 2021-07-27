@@ -43,13 +43,13 @@ public class UserHandler {
     @NotNull
     public Mono<ServerResponse> login(ServerRequest serverRequest) {
         return Mono.just(serverRequest.queryParams())
-                .flatMap(body -> {
-                    List<String> list = body.get("username");
+                .flatMap(multiValueMap -> {
+                    List<String> list = multiValueMap.get("username");
                     if(list == null || list.isEmpty()){
                         return badResponse;
                     }
                     String username=list.get(0);
-                    list = body.get("password");
+                    list = multiValueMap.get("password");
                     if(list == null || list.isEmpty()){
                         return badResponse;
                     }
@@ -67,5 +67,6 @@ public class UserHandler {
         Mono<UserBO> userBOMono = userRepository.getUserInfo(serverRequest.pathVariable("username"));
         return userBOMono.flatMap(userBO -> okResponseBuilder.body(userBOMono, UserBO.class))
                 .switchIfEmpty(badResponse);
+
     }
 }
