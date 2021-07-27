@@ -13,6 +13,7 @@ import java.time.Duration;
 
 @Configuration
 public class ConnectionPoolConfig {
+
     @Bean
     ConnectionPool connectionPool(){
         return new ConnectionPool(ConnectionPoolConfiguration.builder(
@@ -41,10 +42,5 @@ public class ConnectionPoolConfig {
     @Bean
     Mono<Connection> connectionMono(){
         return connectionPool().create();
-    }
-
-    @Bean
-    Scheduler boundedElastic(){
-        return Schedulers.boundedElastic();
     }
 }
