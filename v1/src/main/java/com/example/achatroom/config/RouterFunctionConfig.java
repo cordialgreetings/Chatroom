@@ -27,19 +27,26 @@ public class RouterFunctionConfig {
     }
 
     @Bean
-    public RouterFunction<?> Router() {
+    public RouterFunction<?> MessageRouter() {
+        return route(POST("/message/send"), messageHandler::send)
+                .andRoute(POST("/message/retrieve"), messageHandler::retrieve)
+                .filter(bearerTokenFilter);
+    }
+
+    @Bean
+    public RouterFunction<?> RoomRouter(){
         return route(POST("/room"), roomHandler::createRoom)
                 .andRoute(PUT("/room/{roomId}/enter"), roomHandler::enterRoom)
                 .andRoute(PUT("/roomLeave"), roomHandler::leaveRoom)
+                .filter(bearerTokenFilter)
                 .andRoute(GET("/room/{roomId}"), roomHandler::getRoomInfo)
                 .andRoute(GET("/room/{roomId}/users"), roomHandler::getUsers)
-                .andRoute(POST("/roomList"), roomHandler::getRooms)
+                .andRoute(POST("/roomList"), roomHandler::getRooms);
+    }
 
-                .andRoute(POST("/message/send"), messageHandler::send)
-                .andRoute(POST("/message/retrieve"), messageHandler::retrieve)
-
-                .andRoute(GET("/user/{username}"), userHandler::getUserInfo)
-                .filter(bearerTokenFilter)
+    @Bean
+    public RouterFunction<?> UserRouter(){
+        return route(GET("/user/{username}"), userHandler::getUserInfo)
                 .andRoute(POST("/user"), userHandler::createUser)
                 .andRoute(GET("/userLogin"), userHandler::login);
     }
