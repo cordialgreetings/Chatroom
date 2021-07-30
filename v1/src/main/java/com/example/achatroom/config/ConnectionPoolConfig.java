@@ -29,6 +29,8 @@ public class ConnectionPoolConfig {
 //                        .option(Option.valueOf("tcpNoDelay"), true) // optional, default false
                         .build()))
                 .maxAcquireTime(Duration.ofSeconds(6))
+                .initialSize(20)
+                .maxSize(35)
                 .build());
     }
 
