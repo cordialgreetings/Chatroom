@@ -6,13 +6,11 @@ import io.r2dbc.spi.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Scheduler;
-import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
 
 @Configuration
-public class ConnectionPoolConfig {
+public class MySQLConnectionPoolConfig {
 
     @Bean
     ConnectionPool connectionPool(){
@@ -42,7 +40,7 @@ public class ConnectionPoolConfig {
 //    }
 
     @Bean
-    Mono<Connection> connectionMono(){
+    Mono<Connection> connectionMysql(){
         return connectionPool().create();
     }
 }

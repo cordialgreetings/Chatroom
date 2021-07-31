@@ -9,12 +9,12 @@ CREATE TABLE IF NOT EXISTS `User`(
     `email` VARCHAR(200) NOT NULL,
     `password` VARCHAR(200) NOT NULL,
     `phone` VARCHAR(200) NOT NULL
-) ENGINE=Myisam DEFAULT CHARSET=utf8mb4;
-# 只有插入和读取操作,不允许重复名字的room创建
+) ENGINE=Innodb DEFAULT CHARSET=utf8mb4;
+# 只有插入和读取操作,允许重名room创建
 CREATE TABLE IF NOT EXISTS `Room`(
     `roomId` INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     `name` VARCHAR(200) NOT NULL
-) ENGINE=Myisam DEFAULT CHARSET=utf8mb4;
+) ENGINE=Innodb DEFAULT CHARSET=utf8mb4;
 # message只会插入和读取,没有删除和更新的操作
 CREATE TABLE IF NOT EXISTS `Message`(
     `roomId` INT NOT NULL,

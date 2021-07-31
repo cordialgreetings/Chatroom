@@ -7,15 +7,15 @@ import reactor.core.publisher.Mono;
 
 @Repository
 public class RoomRepository {
-    public final Mono<Connection> connectionMono;
+    public final Mono<Connection> connectionMysql;
     public final String CREATE_ROOM_SQL = "insert into `room`(name) values (?)";
     @Autowired
-    public RoomRepository(Mono<Connection> connectionMono) {
-        this.connectionMono = connectionMono;
+    public RoomRepository(Mono<Connection> connectionMysql) {
+        this.connectionMysql = connectionMysql;
     }
 
     public Mono<String> createRoom(String name){
-        return connectionMono.flatMap(connection ->
+        return connectionMysql.flatMap(connection ->
                 Mono.from(connection.createStatement(CREATE_ROOM_SQL)
                         .bind(0,name).returnGeneratedValues("roomId").execute())
                         .doFinally(signalType -> ((Mono<Void>)connection.close()).subscribe()))
