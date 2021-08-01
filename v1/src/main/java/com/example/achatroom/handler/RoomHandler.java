@@ -1,5 +1,6 @@
 package com.example.achatroom.handler;
 
+import com.example.achatroom.BO.RoomBO;
 import com.example.achatroom.Repository.RoomRepository;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
@@ -23,8 +24,8 @@ public class RoomHandler {
 
     @NotNull
     public Mono<ServerResponse> createRoom(ServerRequest serverRequest){
-        return serverRequest.bodyToMono(String.class)
-                .flatMap(s -> okResponseBuilder.body(roomRepository.createRoom(s),String.class))
+        return serverRequest.bodyToMono(RoomBO.class)
+                .flatMap(roomBO -> okResponseBuilder.body(roomRepository.createRoom(roomBO.getName()),String.class))
                 .switchIfEmpty(badResponse);
     }
 

@@ -5,7 +5,6 @@ import io.r2dbc.pool.ConnectionPoolConfiguration;
 import io.r2dbc.spi.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 
@@ -39,8 +38,4 @@ public class MySQLConnectionPoolConfig {
 //                .maxAcquireTime(Duration.ofSeconds(6)).build());
 //    }
 
-    @Bean
-    Mono<Connection> connectionMysql(){
-        return connectionPool().create();
-    }
 }
