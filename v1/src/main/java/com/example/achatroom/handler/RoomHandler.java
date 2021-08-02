@@ -41,7 +41,10 @@ public class RoomHandler {
 
     @NotNull
     public Mono<ServerResponse> getRoomInfo(ServerRequest serverRequest){
-        return ServerResponse.ok().body(Mono.just("null"),String.class);
+        Mono<String> name=roomRepository.getRoomInfo(Integer.parseInt(
+                serverRequest.pathVariable("roomId"), 10));
+        return name.flatMap(s -> okResponseBuilder.body(name, String.class))
+                .switchIfEmpty(badResponse);
     }
 
     @NotNull
