@@ -6,6 +6,7 @@ import io.r2dbc.spi.Connection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -28,28 +29,28 @@ public class RoomRepository {
         return connectionMysql.flatMap(connection ->
                 Mono.from(connection.createStatement(CREATE_ROOM_SQL)
                         .bind(0, name).returnGeneratedValues("roomId").execute())
-                        .doFinally(signalType -> ((Mono<Void>)connection.close()).subscribe()))
-                .flatMap(result -> Mono.from(result.map((row, rowMetadata) -> row.get(0, Integer.class))))
-                .map(Object::toString);
+                        .flatMap(result -> Mono.from(result.map((row, rowMetadata) -> row.get(0, Integer.class))))
+                        .map(Object::toString)
+                        .doFinally(signalType -> ((Mono<Void>)connection.close()).subscribe()));
     }
 
     public Mono<String> getRoomInfo(int roomId){
         return connectionMysql.flatMap(connection ->
                 Mono.from(connection.createStatement(GET_ROOM_INFO_SQL)
                         .bind(0, roomId).execute())
-                        .doFinally(signalType -> ((Mono<Void>)connection.close()).subscribe()))
-                .flatMap(result -> Mono.from(result.map((row, rowMetadata) -> row.get(0, String.class))));
+                        .flatMap(result -> Mono.from(result.map((row, rowMetadata) -> row.get(0, String.class))))
+                        .doFinally(signalType -> ((Mono<Void>)connection.close()).subscribe()));
     }
 
     public Mono<List<RoomBO>> getRooms(PageBO pageBO){
-        return connectionMysql.flatMapMany(connection ->
-                Mono.from(connection.createStatement(GET_ROOMS_SQL)
+        return connectionMysql.flatMap(connection ->
+                Flux.from(connection.createStatement(GET_ROOMS_SQL)
                         .bind(0, pageBO.getPageIndex()* pageBO.getPageSize())
                         .bind(1, pageBO.getPageSize()).execute())
-                        .doFinally(signalType -> ((Mono<Void>)connection.close()).subscribe()))
-                .flatMap(result -> result.map((row, rowMetadata) ->
-                        new RoomBO(row.get(1,String.class),row.get(0,Integer.class).toString())))
-                .collectList();
+                        .flatMap(result -> result.map((row, rowMetadata) ->
+                                new RoomBO(row.get(1,String.class),row.get(0,Integer.class).toString())))
+                        .collectList()
+                        .doFinally(signalType -> ((Mono<Void>)connection.close()).subscribe()));
     }
 
 }

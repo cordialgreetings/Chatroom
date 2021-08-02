@@ -34,19 +34,19 @@ public class UserRepository {
     public Mono<String> login(String username) {
         return connectionMysql.flatMap(
                 connection -> Mono.from(connection.createStatement(LOGIN_SQL)
-                    .bind(0, username).execute())
-                    .doFinally(signalType -> ((Mono<Void>)connection.close()).subscribe()))
-                .flatMap(result -> Mono.from(result.map((row, rowMetadata) -> row.get(0, String.class))));
+                        .bind(0, username).execute())
+                        .flatMap(result -> Mono.from(result.map((row, rowMetadata) -> row.get(0, String.class))))
+                        .doFinally(signalType -> ((Mono<Void>)connection.close()).subscribe()));
     }
 
     public Mono<UserBO> getUserInfo(String username){
         return connectionMysql.flatMap(connection ->
                 Mono.from(connection.createStatement(GET_USERINFO_SQL)
                         .bind(0, username).execute())
-                        .doFinally(signalType -> ((Mono<Void>)connection.close()).subscribe()))
-                .flatMap(result -> Mono.from(result.map((row, rowMetadata) ->
-                        new UserBO(row.get(0, String.class), row.get(1, String.class),
-                                row.get(2, String.class), row.get(3, String.class)))));
+                        .flatMap(result -> Mono.from(result.map((row, rowMetadata) ->
+                                new UserBO(row.get(0, String.class), row.get(1, String.class),
+                                        row.get(2, String.class), row.get(3, String.class)))))
+                        .doFinally(signalType -> ((Mono<Void>)connection.close()).subscribe()));
     }
 
 }
