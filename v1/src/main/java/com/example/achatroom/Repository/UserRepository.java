@@ -11,7 +11,6 @@ import reactor.core.publisher.Mono;
 @Repository
 public class UserRepository {
     public final Mono<Connection> connectionMysql;
-    public final Mono<Integer> init=Mono.just(0);
     public static final String LOGIN_SQL ="select password from `user` where username=?";
     public static final String CREATE_USER_SQL = "replace into `user` values (?,?,?,?,?,?)";
     public static final String GET_USERINFO_SQL = "select firstName, lastName, email, phone from `user` where username=?";
@@ -22,13 +21,13 @@ public class UserRepository {
     }
 
     public Mono<Void> createUser(UserPO userPO) {
-        return init.doOnNext(o -> connectionMysql.flatMap(
-                connection -> Mono.from(connection.createStatement(CREATE_USER_SQL)
+        return connectionMysql.flatMap(connection ->
+                    Mono.from(connection.createStatement(CREATE_USER_SQL)
                         .bind(0, userPO.getUsername()).bind(1, userPO.getFirstName())
                         .bind(2, userPO.getLastName()).bind(3, userPO.getEmail())
                         .bind(4, userPO.getPassword()).bind(5, userPO.getPhone())
                         .execute()
-                    ).doFinally(signalType -> ((Mono<Void>)connection.close()).subscribe())).subscribe()
+                    ).doFinally(signalType -> ((Mono<Void>)connection.close()).subscribe())
         ).then();
     }
 

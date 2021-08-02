@@ -23,11 +23,11 @@ public class RoomRepository {
 
     public Mono<String> createRoom(String name){
         Mono<Integer> key = Mono.just(keyGenerator.generate());
-        return key.doOnNext(i -> connectionMysql.flatMap(
+        return key.flatMap(i -> connectionMysql.flatMap(
                 connection -> Mono.from(connection.createStatement(CREATE_ROOM_SQL)
                         .bind(0, i).bind(1, name).execute())
-                        .doFinally(signalType -> ((Mono<Void>)connection.close()).subscribe())).subscribe()
-        ).map(Object::toString);
+                        .doFinally(signalType -> ((Mono<Void>)connection.close()).subscribe()))
+        ).then(key).map(Object::toString);
     }
 
 }
