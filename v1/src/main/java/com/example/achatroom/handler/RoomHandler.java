@@ -54,7 +54,10 @@ public class RoomHandler {
 
     @NotNull
     public Mono<ServerResponse> getUsers(ServerRequest serverRequest){
-        return ServerResponse.ok().body(Mono.just("null"),String.class);
+        return roomRepository.getUsers(Integer.parseInt(serverRequest.pathVariable("roomId"), 10))
+                .flatMap(strings -> strings.size()!=0
+                        ?okResponseBuilder.body(Flux.fromIterable(strings),String.class)
+                        :badResponse);
     }
 
     @NotNull

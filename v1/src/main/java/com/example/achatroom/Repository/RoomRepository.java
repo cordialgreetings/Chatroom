@@ -18,6 +18,7 @@ public class RoomRepository {
     public final ReactiveStringRedisTemplate redisTemplate;
     public static final String CREATE_ROOM_SQL = "insert into `room`(`name`) values (?)";
     public static final String GET_ROOM_INFO_SQL = "select `name` from `room` where roomId=?";
+    public static final String GET_USERS_SQL = "select `username` from `roomuser` where roomId=?";
     public static final String GET_ROOMS_SQL = "select * from `room` where ?<roomId limit ?";
     @Autowired
     public RoomRepository(Mono<Connection> connectionMysql, ReactiveStringRedisTemplate reactiveStringRedisTemplate) {
@@ -39,6 +40,15 @@ public class RoomRepository {
                 Mono.from(connection.createStatement(GET_ROOM_INFO_SQL)
                         .bind(0, roomId).execute())
                         .flatMap(result -> Mono.from(result.map((row, rowMetadata) -> row.get(0, String.class))))
+                        .doFinally(signalType -> ((Mono<Void>)connection.close()).subscribe()));
+    }
+
+    public Mono<List<String>> getUsers(int roomId){
+        return connectionMysql.flatMap(connection ->
+                Flux.from(connection.createStatement(GET_USERS_SQL)
+                        .bind(0, roomId).execute())
+                        .flatMap(result -> Mono.from(result.map((row, rowMetadata) -> row.get(0, String.class))))
+                        .collectList()
                         .doFinally(signalType -> ((Mono<Void>)connection.close()).subscribe()));
     }
 

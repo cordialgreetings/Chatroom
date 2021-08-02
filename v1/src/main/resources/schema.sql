@@ -23,13 +23,14 @@ CREATE TABLE IF NOT EXISTS `Message`(
     `timestamp` VARCHAR(200) NOT NULL,
     INDEX `room_message_index` (`roomId`,`timestamp`)
 ) ENGINE=Myisam DEFAULT CHARSET=utf8mb4;
-# # 可能有频繁的删除插入读取操作
-# CREATE TABLE IF NOT EXISTS `RoomUser`(
-#     `roomId` INT NOT NULL,
-#     `username` VARCHAR(200) NOT NULL,
-#     PRIMARY KEY (`roomId`,`username`)
-# ) ENGINE=Innodb DEFAULT CHARSET=utf8mb4;
-CREATE TABLE IF NOT EXISTS `UserRoom`(
-     `username` VARCHAR(200) PRIMARY KEY NOT NULL,
-     `roomId` INT NOT NULL
-) ENGINE=Myisam DEFAULT CHARSET=utf8mb4;
+# 可能有频繁的删除插入读取操作
+CREATE TABLE IF NOT EXISTS `RoomUser`(
+    `roomId` INT NOT NULL,
+    `username` VARCHAR(200) NOT NULL,
+    PRIMARY KEY (`roomId`,`username`)
+) ENGINE=Innodb DEFAULT CHARSET=utf8mb4;
+
+# CREATE TABLE IF NOT EXISTS `UserRoom`(
+#      `username` VARCHAR(200) PRIMARY KEY NOT NULL,
+#      `roomId` INT NOT NULL
+# ) ENGINE=Myisam DEFAULT CHARSET=utf8mb4;
