@@ -1,12 +1,17 @@
 package com.example.achatroom.handler;
 
+import com.example.achatroom.BO.PageBO;
+import com.example.achatroom.BO.RoomNameBO;
 import com.example.achatroom.BO.RoomBO;
 import com.example.achatroom.Repository.RoomRepository;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @Service
 public class RoomHandler {
@@ -24,8 +29,8 @@ public class RoomHandler {
 
     @NotNull
     public Mono<ServerResponse> createRoom(ServerRequest serverRequest){
-        return serverRequest.bodyToMono(RoomBO.class)
-                .flatMap(roomBO -> okResponseBuilder.body(roomRepository.createRoom(roomBO.getName()),String.class))
+        return serverRequest.bodyToMono(RoomNameBO.class)
+                .flatMap(roomNameBO -> okResponseBuilder.body(roomRepository.createRoom(roomNameBO.getName()),String.class))
                 .switchIfEmpty(badResponse);
     }
 
@@ -54,6 +59,12 @@ public class RoomHandler {
 
     @NotNull
     public Mono<ServerResponse> getRooms(ServerRequest serverRequest){
-        return ServerResponse.ok().body(Mono.just("null"),String.class);
+        return serverRequest.bodyToMono(PageBO.class)
+                .flatMap(pageBO -> pageBO.getPageIndex()<0 ?badResponse
+                        :roomRepository.getRooms(pageBO).flatMap(roomBOList -> roomBOList.size()!=0
+                            ?okResponseBuilder.body(Flux.fromIterable(roomBOList),RoomBO.class)
+                            :badResponse));
+//        reactor的反人类之处,flux/mono对象不会被修改，但里面的数据流留出去之后就没了，然后我判断一下有没有元素，然后里面的元素也没了
+//        return rooms.hasElements().flatMap(aBool -> aBool?okResponseBuilder.body(rooms,RoomBO.class):badResponse);
     }
 }

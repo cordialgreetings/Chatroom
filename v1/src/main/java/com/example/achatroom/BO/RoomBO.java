@@ -1,10 +1,11 @@
 package com.example.achatroom.BO;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import java.io.Serializable;
-
 @Data
-public class RoomBO implements Serializable {
+@AllArgsConstructor
+public class RoomBO {
     String name;
+    String id;
 }
