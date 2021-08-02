@@ -12,22 +12,20 @@ import reactor.core.publisher.Mono;
 public class RoomRepository {
     public final Mono<Connection> connectionMysql;
     public final ReactiveStringRedisTemplate redisTemplate;
-    public final KeyGenerator keyGenerator;
-    public final String CREATE_ROOM_SQL = "insert into `room`(`roomId`,`name`) values (?, ?)";
+    public final String CREATE_ROOM_SQL = "insert into `room`(`name`) values (?)";
     @Autowired
-    public RoomRepository(Mono<Connection> connectionMysql, ReactiveStringRedisTemplate reactiveStringRedisTemplate, KeyGenerator keyGenerator) {
+    public RoomRepository(Mono<Connection> connectionMysql, ReactiveStringRedisTemplate reactiveStringRedisTemplate) {
         this.connectionMysql = connectionMysql;
         this.redisTemplate = reactiveStringRedisTemplate;
-        this.keyGenerator = keyGenerator;
     }
 
     public Mono<String> createRoom(String name){
-        Mono<Integer> key = Mono.just(keyGenerator.generate());
-        return key.flatMap(i -> connectionMysql.flatMap(
+        return connectionMysql.flatMap(
                 connection -> Mono.from(connection.createStatement(CREATE_ROOM_SQL)
-                        .bind(0, i).bind(1, name).execute())
+                        .bind(0, name).returnGeneratedValues("roomId").execute())
                         .doFinally(signalType -> ((Mono<Void>)connection.close()).subscribe()))
-        ).then(key).map(Object::toString);
+                .flatMap(result -> Mono.from(result.map((row, rowMetadata) -> row.get(0, Integer.class))))
+                .map(Object::toString);
     }
 
 }
