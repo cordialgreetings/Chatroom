@@ -31,7 +31,7 @@ public class BearerTokenFilter implements HandlerFilterFunction<ServerResponse, 
         if(username==null){
             return ServerResponse.status(HttpStatus.BAD_REQUEST).build();
         }
-        serverRequest.exchange().getRequest().mutate().header("name", username).build();
+//        serverRequest.exchange().getRequest().mutate().header("name", username).build();
         HttpHeaders headers = serverRequest.exchange().getRequest().getHeaders();
         headers = HttpHeaders.writableHttpHeaders(headers);
         headers.add("name", username);

@@ -7,11 +7,13 @@ import org.springframework.data.redis.support.atomic.RedisAtomicInteger;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+@Component
 public class KeyGenerator {
     public RedisAtomicInteger key;
     public static final String GENERATOR_KEY = "GENERATOR_KEY";
     public static final String INIT_KEY = "select max(`roomId`) from `room`";
 
+    @Autowired
     public KeyGenerator(RedisConnectionFactory redisConnectionFactory, Mono<Connection> connectionMysql) {
         connectionMysql.flatMap(connection -> Mono.from(connection.createStatement(INIT_KEY).execute())
                 .doFinally(signalType -> ((Mono<Void>)connection.close()).subscribe()))
@@ -23,5 +25,9 @@ public class KeyGenerator {
 
     public int generate(){
         return key.incrementAndGet();
+    }
+
+    public int get(){
+        return key.get();
     }
 }

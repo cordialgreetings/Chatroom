@@ -36,7 +36,13 @@ public class RoomHandler {
 
     @NotNull
     public Mono<ServerResponse> enterRoom(ServerRequest serverRequest){
-        return ServerResponse.ok().body(Mono.just("null"),String.class);
+        List<String> list = serverRequest.headers().header("name");
+        if(list.isEmpty()){
+            return badResponse;
+        }
+        String username = list.get(0);
+        int roomId=Integer.parseInt(serverRequest.pathVariable("roomId"),10);
+        return roomRepository.enterRoom(username,roomId).flatMap(aBool -> aBool?okResponse:badResponse);
     }
 
     @NotNull
