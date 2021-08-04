@@ -57,27 +57,25 @@ public class RoomRepository {
                      if(oldRoomId==roomId){
                          return trueMono;
                      }
+                     Mono<?> afterMysql;
                      if(oldRoomId!=-1){
-                         return connectionMysql.flatMap(connection ->
+                         afterMysql = connectionMysql.flatMap(connection ->
                                  ((Mono<Void>)connection.beginTransaction())
                                          .then(Mono.from(connection.createStatement(LEAVE_ROOM_SQL)
                                                  .bind(0, oldRoomId).bind(1, username).execute()))
                                          .then(Mono.from(connection.createStatement(ENTER_ROOM_SQL)
                                                  .bind(0, roomId).bind(1, username).execute()))
                                          .then((Mono<Void>)connection.commitTransaction())
-                                         .then(redisTemplate.opsForHash().put(USER2ROOM, username, Integer.toString(roomId)))
-                                         .then(trueMono)
-                                         .onErrorResume(throwable -> falseMono)
                                          .doFinally(signalType -> ((Mono<Void>)connection.close()).subscribe()));
                     }else{
-                        return connectionMysql.flatMap(connection ->
+                        afterMysql = connectionMysql.flatMap(connection ->
                                 Mono.from(connection.createStatement(ENTER_ROOM_SQL)
                                         .bind(0, roomId).bind(1, username).execute())
-                                        .flatMap(result -> redisTemplate.opsForHash().put(USER2ROOM, username, Integer.toString(roomId)))
-                                        .then(trueMono)
-                                        .onErrorResume(throwable -> falseMono)
                                         .doFinally(signalType -> ((Mono<Void>)connection.close()).subscribe()));
                     }
+                    return afterMysql.then(redisTemplate.opsForHash().put(USER2ROOM, username, Integer.toString(roomId)))
+                            .then(trueMono)
+                            .onErrorResume(throwable -> falseMono);
                 });
     }
 
