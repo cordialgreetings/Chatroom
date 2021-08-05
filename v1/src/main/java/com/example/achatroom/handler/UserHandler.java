@@ -7,6 +7,8 @@ import com.example.achatroom.component.JwtAuthComponent;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
@@ -35,31 +37,29 @@ public class UserHandler {
 
     @NotNull
     public Mono<ServerResponse> createUser(ServerRequest serverRequest) {
-        return serverRequest.bodyToMono(UserPO.class)
+        return serverRequest.body(BodyExtractors.toMono(UserPO.class))
                 .flatMap(userRepository::createUser)
-                .flatMap(body -> okResponse);
+                .then(okResponse);
     }
 
     @NotNull
     public Mono<ServerResponse> login(ServerRequest serverRequest) {
-        return Mono.just(serverRequest.queryParams())
-                .flatMap(multiValueMap -> {
-                    List<String> list = multiValueMap.get("username");
-                    if(list == null || list.isEmpty()){
-                        return badResponse;
-                    }
-                    String username=list.get(0);
-                    list = multiValueMap.get("password");
-                    if(list == null || list.isEmpty()){
-                        return badResponse;
-                    }
-                    String password = list.get(0);
-                    return userRepository.login(username)
-                            .flatMap(pwd -> password.equals(pwd)
-                            ? okResponseBuilder.body(jwtAuthComponent.getToken(Mono.just(username)),String.class)
-                            : badResponse)
-                            .switchIfEmpty(badResponse);
-                });
+        MultiValueMap<String,String> multiValueMap=serverRequest.queryParams();
+        List<String> list = multiValueMap.get("username");
+        if(list == null || list.isEmpty()){
+            return badResponse;
+        }
+        String username=list.get(0);
+        list = multiValueMap.get("password");
+        if(list == null || list.isEmpty()){
+            return badResponse;
+        }
+        String password = list.get(0);
+        return userRepository.login(username)
+                .flatMap(pwd -> password.equals(pwd)
+                        ? okResponseBuilder.body(Mono.just(jwtAuthComponent.getToken(username)),String.class)
+                        : badResponse)
+                .switchIfEmpty(badResponse);
     }
 
     @NotNull

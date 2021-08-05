@@ -4,6 +4,7 @@ import com.example.achatroom.BO.UserBO;
 import com.example.achatroom.PO.UserPO;
 
 import io.r2dbc.spi.Connection;
+import io.r2dbc.spi.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
@@ -20,7 +21,7 @@ public class UserRepository {
         this.connectionMysql =connectionMysql;
     }
 
-    public Mono<Void> createUser(UserPO userPO) {
+    public Mono<Result> createUser(UserPO userPO) {
         return connectionMysql.flatMap(connection ->
                     Mono.from(connection.createStatement(CREATE_USER_SQL)
                         .bind(0, userPO.getUsername()).bind(1, userPO.getFirstName())
@@ -28,7 +29,7 @@ public class UserRepository {
                         .bind(4, userPO.getPassword()).bind(5, userPO.getPhone())
                         .execute()
                     ).doFinally(signalType -> ((Mono<Void>)connection.close()).subscribe())
-        ).then();
+        );
     }
 
     public Mono<String> login(String username) {

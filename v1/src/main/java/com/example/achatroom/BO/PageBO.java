@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class PageBO {
-    int pageIndex;
-    int pageSize;
+    public int pageIndex;
+    public int pageSize;
 }

@@ -10,8 +10,6 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-
 
 @Repository
 public class RoomRepository {
@@ -20,6 +18,7 @@ public class RoomRepository {
     public final KeyGenerator keyGenerator;
     public final Mono<Boolean> trueMono = Mono.just(true);
     public final Mono<Boolean> falseMono = Mono.just(false);
+    public final Flux<String> errorMono = Flux.error(new IllegalArgumentException());
     public final Mono<String> initRoomIdMono = Mono.just("-1");
     public static final String USER2ROOM = "u2r";
     public static final String CREATE_ROOM_SQL = "insert into `room`(`roomId`,`name`) values (?,?)";
@@ -40,7 +39,7 @@ public class RoomRepository {
         return connectionMysql.flatMap(connection ->
                 Mono.from(connection.createStatement(CREATE_ROOM_SQL)
                         .bind(0, keyGenerator.generate()).bind(1, name)
-                        .returnGeneratedValues("roomId").execute())
+                        .returnGeneratedValues().execute())
                         .flatMap(result -> Mono.from(result.map((row, rowMetadata) -> row.get(0, Integer.class))))
                         .map(Object::toString)
                         .doFinally(signalType -> ((Mono<Void>) connection.close()).subscribe()));
@@ -107,23 +106,25 @@ public class RoomRepository {
                         .doFinally(signalType -> ((Mono<Void>) connection.close()).subscribe()));
     }
 
-    public Mono<List<String>> getUsers(int roomId) {
-        return connectionMysql.flatMap(connection ->
+    public Flux<String> getUsers(int roomId) {
+        int max_id = keyGenerator.get();
+        if (roomId <= 0 || roomId > max_id) {
+            return errorMono;
+        }
+        return connectionMysql.flatMapMany(connection ->
                 Flux.from(connection.createStatement(GET_USERS_SQL)
                         .bind(0, roomId).execute())
                         .flatMap(result -> Mono.from(result.map((row, rowMetadata) -> row.get(0, String.class))))
-                        .collectList()
                         .doFinally(signalType -> ((Mono<Void>) connection.close()).subscribe()));
     }
 
-    public Mono<List<RoomBO>> getRooms(PageBO pageBO) {
-        return connectionMysql.flatMap(connection ->
+    public Flux<RoomBO> getRooms(PageBO pageBO) {
+        return connectionMysql.flatMapMany(connection ->
                 Flux.from(connection.createStatement(GET_ROOMS_SQL)
-                        .bind(0, pageBO.getPageIndex() * pageBO.getPageSize())
-                        .bind(1, pageBO.getPageSize()).execute())
+                        .bind(0, pageBO.pageIndex * pageBO.pageSize)
+                        .bind(1, pageBO.pageSize).execute())
                         .flatMap(result -> result.map((row, rowMetadata) ->
                                 new RoomBO(row.get(1, String.class), row.get(0, Integer.class).toString())))
-                        .collectList()
                         .doFinally(signalType -> ((Mono<Void>) connection.close()).subscribe()));
     }
 

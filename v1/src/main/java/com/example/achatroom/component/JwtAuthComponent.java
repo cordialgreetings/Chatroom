@@ -17,8 +17,8 @@ public class JwtAuthComponent {
     private final JwtBuilder builder = Jwts.builder();
     private final JwtParser parser = Jwts.parserBuilder().setSigningKey(key).build();
 
-    public Mono<String> getToken(Mono<String> username) {
-        return username.map(s -> builder.setSubject(s).signWith(key).compact());
+    public String getToken(String username) {
+        return builder.setSubject(username).signWith(key).compact();
     }
 
     public String validate(String bearerToken) {
