@@ -1,12 +1,16 @@
 package com.example.achatroom.handler;
 
 import com.example.achatroom.BO.MessageSendBO;
+import com.example.achatroom.BO.PageBO;
+import com.example.achatroom.BO.RoomBO;
+import com.example.achatroom.PO.MessagePO;
 import com.example.achatroom.Repository.MessageRepository;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -37,6 +41,20 @@ public class MessageHandler {
     }
     @NotNull
     public Mono<ServerResponse> retrieve(ServerRequest serverRequest){
-        return ServerResponse.ok().body(Mono.just("null"),String.class);
+        List<String> list = serverRequest.headers().header("name");
+        if (list.isEmpty()) {
+            return badResponse;
+        }
+        String username = list.get(0);
+        return serverRequest.bodyToMono(PageBO.class)
+                .flatMap(pageBO -> {
+                    if(pageBO.getPageIndex()>=0){
+                        return badResponse;
+                    }else{
+                        return  messageRepository.retrive(username, pageBO)
+                                .switchIfEmpty(Mono.error(new IllegalArgumentException()))
+                                .flatMap(messagePOS -> okResponseBuilder.body(Flux.fromIterable(messagePOS), MessagePO.class));
+                    }
+                });
     }
 }
