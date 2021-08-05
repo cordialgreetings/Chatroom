@@ -18,11 +18,11 @@ CREATE TABLE IF NOT EXISTS `Room`(
 # message只会插入和读取,没有删除和更新的操作
 CREATE TABLE IF NOT EXISTS `Message`(
     `roomId` INT NOT NULL,
+    `timestamp` BIGINT NOT NULL,
     `messageId` VARCHAR(200) NOT NULL,
     `text` VARCHAR(200) NOT NULL,
-    `timestamp` VARCHAR(200) NOT NULL,
-    INDEX `room_message_index` (`roomId`,`timestamp`)
-) ENGINE=Myisam DEFAULT CHARSET=utf8mb4;
+    PRIMARY KEY (`roomId`,`timestamp`, `messageId`)
+) ENGINE=Innodb DEFAULT CHARSET=utf8mb4;
 # 可能有频繁的删除插入读取操作
 CREATE TABLE IF NOT EXISTS `RoomUser`(
     `roomId` INT NOT NULL,
