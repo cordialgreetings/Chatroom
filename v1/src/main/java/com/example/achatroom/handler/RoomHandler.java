@@ -11,6 +11,8 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @Service
 public class RoomHandler {
     private final RoomRepository roomRepository;
@@ -56,17 +58,16 @@ public class RoomHandler {
 
     @NotNull
     public Mono<ServerResponse> getUsers(ServerRequest serverRequest) {
-        return okResponseBuilder.body(roomRepository.getUsers(Integer.parseInt(serverRequest.pathVariable("roomId"), 10)), String.class);
+        Mono<List<String>> users = roomRepository.getUsers(Integer.parseInt(serverRequest.pathVariable("roomId"), 10));
+        return users.flatMap(strings -> okResponseBuilder.body(users,strings.getClass()));
     }
 
     @NotNull
     public Mono<ServerResponse> getRooms(ServerRequest serverRequest) {
         return serverRequest.body(BodyExtractors.toMono(PageBO.class))
                 .flatMap(pageBO -> pageBO.pageIndex>=0
-                        ?okResponseBuilder.body(roomRepository.getRooms(pageBO)
-                            .switchIfEmpty(error),RoomBO.class)
-                        :badResponse
-                );
+                        ?okResponseBuilder.body(roomRepository.getRooms(pageBO),RoomBO.class)
+                        :badResponse);
 //        reactor的反人类之处,flux/mono对象不会被修改，但里面的数据流留出去之后就没了，然后我判断一下有没有元素，然后里面的元素也没了
 //        return rooms.hasElements().flatMap(aBool -> aBool?okResponseBuilder.body(rooms,RoomBO.class):badResponse);
     }

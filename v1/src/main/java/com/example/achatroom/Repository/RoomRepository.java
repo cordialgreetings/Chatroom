@@ -11,6 +11,8 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 
 @Repository
 public class RoomRepository {
@@ -19,7 +21,7 @@ public class RoomRepository {
     public final KeyGenerator keyGenerator;
     public final Mono<Boolean> trueMono = Mono.just(true);
     public final Mono<Boolean> falseMono = Mono.just(false);
-    public final Flux<String> errorFlux = Flux.error(new IllegalArgumentException());
+    public final Mono<List<String>> errorFlux = Mono.error(new IllegalArgumentException());
     public static final String USER2ROOM = "u2r";
     public static final String CREATE_ROOM_SQL = "insert into `room`(`roomId`,`name`) values (?,?)";
     public static final String ENTER_ROOM_SQL = "insert into `roomuser`(`roomId`,`username`) values (?, ?)";
@@ -105,15 +107,16 @@ public class RoomRepository {
                         .doFinally(signalType -> ((Mono<Void>) connection.close()).subscribe()));
     }
 
-    public Flux<String> getUsers(int roomId) {
+    public Mono<List<String>> getUsers(int roomId) {
         if (roomId <= 0 || roomId > keyGenerator.get()) {
             return errorFlux;
         }
         return connectionMysql.flatMapMany(connection ->
                 Flux.from(connection.createStatement(GET_USERS_SQL)
                         .bind(0, roomId).execute())
-                        .flatMap(result -> Mono.from(result.map((row, rowMetadata) -> row.get(0, String.class))))
-                        .doFinally(signalType -> ((Mono<Void>) connection.close()).subscribe()));
+                        .flatMap(result -> result.map((row, rowMetadata) -> row.get(0, String.class)))
+                        .doFinally(signalType -> ((Mono<Void>) connection.close()).subscribe()))
+                .collectList();
     }
 
     public Flux<RoomBO> getRooms(PageBO pageBO) {
