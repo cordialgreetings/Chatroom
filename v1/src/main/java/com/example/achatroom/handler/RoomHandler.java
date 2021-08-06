@@ -11,8 +11,6 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-
 @Service
 public class RoomHandler {
     private final RoomRepository roomRepository;
@@ -37,22 +35,14 @@ public class RoomHandler {
 
     @NotNull
     public Mono<ServerResponse> enterRoom(ServerRequest serverRequest) {
-        List<String> list = serverRequest.headers().header("name");
-        if (list.isEmpty()) {
-            return badResponse;
-        }
-        String username = list.get(0);
+        String username = serverRequest.headers().header("name").get(0);
         int roomId = Integer.parseInt(serverRequest.pathVariable("roomId"), 10);
         return roomRepository.enterRoom(username, roomId).flatMap(aBool -> aBool ? okResponse : badResponse);
     }
 
     @NotNull
     public Mono<ServerResponse> leaveRoom(ServerRequest serverRequest) {
-        List<String> list = serverRequest.headers().header("name");
-        if (list.isEmpty()) {
-            return badResponse;
-        }
-        String username = list.get(0);
+        String username = serverRequest.headers().header("name").get(0);
         return roomRepository.leaveRoom(username).flatMap(aBool -> aBool ? okResponse : badResponse);
     }
 
@@ -71,7 +61,7 @@ public class RoomHandler {
 
     @NotNull
     public Mono<ServerResponse> getRooms(ServerRequest serverRequest) {
-        return serverRequest.bodyToMono(PageBO.class)
+        return serverRequest.body(BodyExtractors.toMono(PageBO.class))
                 .flatMap(pageBO -> pageBO.pageIndex>=0
                         ?okResponseBuilder.body(roomRepository.getRooms(pageBO)
                             .switchIfEmpty(error),RoomBO.class)

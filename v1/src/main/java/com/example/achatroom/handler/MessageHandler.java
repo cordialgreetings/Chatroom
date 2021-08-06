@@ -1,8 +1,7 @@
 package com.example.achatroom.handler;
 
-import com.example.achatroom.BO.MessageSendBO;
+import com.example.achatroom.BO.MessageBO;
 import com.example.achatroom.BO.PageBO;
-import com.example.achatroom.BO.RoomBO;
 import com.example.achatroom.PO.MessagePO;
 import com.example.achatroom.Repository.MessageRepository;
 import org.jetbrains.annotations.NotNull;
@@ -12,8 +11,6 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
 
 @Service
 public class MessageHandler {
@@ -30,30 +27,19 @@ public class MessageHandler {
     }
     @NotNull
     public Mono<ServerResponse> send(ServerRequest serverRequest){
-        List<String> list = serverRequest.headers().header("name");
-        if (list.isEmpty()) {
-            return badResponse;
-        }
-        String username = list.get(0);
-        return serverRequest.bodyToMono(MessageSendBO.class)
-                .flatMap(messageSendBO -> messageRepository.send(username, messageSendBO))
+        return serverRequest.bodyToMono(MessageBO.class)
+                .flatMap(messageBO -> messageRepository.send(serverRequest.headers().header("name").get(0), messageBO))
                 .flatMap(aBool -> aBool?okResponse:badResponse);
     }
     @NotNull
     public Mono<ServerResponse> retrieve(ServerRequest serverRequest){
-        List<String> list = serverRequest.headers().header("name");
-        if (list.isEmpty()) {
-            return badResponse;
-        }
-        String username = list.get(0);
         return serverRequest.bodyToMono(PageBO.class)
                 .flatMap(pageBO -> {
-                    if(pageBO.getPageIndex()>=0){
+                    if(pageBO.pageIndex>=0){
                         return badResponse;
                     }else{
-                        return  messageRepository.retrive(username, pageBO)
-                                .switchIfEmpty(Mono.error(new IllegalArgumentException()))
-                                .flatMap(messagePOS -> okResponseBuilder.body(Flux.fromIterable(messagePOS), MessagePO.class));
+                        return okResponseBuilder.body(messageRepository.retrive(
+                                serverRequest.headers().header("name").get(0), pageBO), MessagePO.class);
                     }
                 });
     }

@@ -5,6 +5,7 @@ import com.example.achatroom.BO.RoomBO;
 import com.example.achatroom.component.KeyGenerator;
 import io.r2dbc.spi.Connection;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.ReactiveHashOperations;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
@@ -14,12 +15,11 @@ import reactor.core.publisher.Mono;
 @Repository
 public class RoomRepository {
     public final Mono<Connection> connectionMysql;
-    public final ReactiveStringRedisTemplate redisTemplate;
+    public final ReactiveHashOperations<String,String,String> reactiveHashOperations;
     public final KeyGenerator keyGenerator;
     public final Mono<Boolean> trueMono = Mono.just(true);
     public final Mono<Boolean> falseMono = Mono.just(false);
-    public final Flux<String> errorMono = Flux.error(new IllegalArgumentException());
-    public final Mono<String> initRoomIdMono = Mono.just("-1");
+    public final Flux<String> errorFlux = Flux.error(new IllegalArgumentException());
     public static final String USER2ROOM = "u2r";
     public static final String CREATE_ROOM_SQL = "insert into `room`(`roomId`,`name`) values (?,?)";
     public static final String ENTER_ROOM_SQL = "insert into `roomuser`(`roomId`,`username`) values (?, ?)";
@@ -31,7 +31,7 @@ public class RoomRepository {
     @Autowired
     public RoomRepository(Mono<Connection> connectionMysql, ReactiveStringRedisTemplate reactiveStringRedisTemplate, KeyGenerator keyGenerator) {
         this.connectionMysql = connectionMysql;
-        this.redisTemplate = reactiveStringRedisTemplate;
+        this.reactiveHashOperations = reactiveStringRedisTemplate.opsForHash();
         this.keyGenerator = keyGenerator;
     }
 
@@ -46,13 +46,12 @@ public class RoomRepository {
     }
 
     public Mono<Boolean> enterRoom(String username, int roomId) {
-        int max_id = keyGenerator.get();
-        if (roomId <= 0 || roomId > max_id) {
+        if (roomId <= 0 || roomId > keyGenerator.get()) {
             return falseMono;
         }
-        return redisTemplate.opsForHash().get(USER2ROOM, username)
-                .switchIfEmpty(initRoomIdMono)
-                .map(i -> Integer.parseInt((String) i, 10))
+        return reactiveHashOperations.get(USER2ROOM, username)
+                .defaultIfEmpty("-1")
+                .map(i -> Integer.parseInt(i, 10))
                 .flatMap(oldRoomId -> {
                     if (oldRoomId == roomId) {
                         return trueMono;
@@ -73,16 +72,16 @@ public class RoomRepository {
                                         .bind(0, roomId).bind(1, username).execute())
                                         .doFinally(signalType -> ((Mono<Void>) connection.close()).subscribe()));
                     }
-                    return afterMysql.then(redisTemplate.opsForHash().put(USER2ROOM, username, Integer.toString(roomId)))
+                    return afterMysql.then(reactiveHashOperations.put(USER2ROOM, username, Integer.toString(roomId)))
                             .then(trueMono)
                             .onErrorResume(throwable -> falseMono);
                 });
     }
 
     public Mono<Boolean> leaveRoom(String username) {
-        return redisTemplate.opsForHash().get(USER2ROOM, username)
-                .switchIfEmpty(initRoomIdMono)
-                .map(i -> Integer.parseInt((String) i, 10))
+        return reactiveHashOperations.get(USER2ROOM, username)
+                .defaultIfEmpty("-1")
+                .map(i -> Integer.parseInt(i, 10))
                 .flatMap(oldRoomId -> {
                     if (oldRoomId == -1) {
                         return falseMono;
@@ -90,7 +89,7 @@ public class RoomRepository {
                         return connectionMysql.flatMap(connection ->
                                 Mono.from(connection.createStatement(LEAVE_ROOM_SQL)
                                         .bind(0, oldRoomId).bind(1, username).execute())
-                                        .then(redisTemplate.opsForHash().put(USER2ROOM, username, "-1"))
+                                        .then(reactiveHashOperations.put(USER2ROOM, username, "-1"))
                                         .then(trueMono)
                                         .onErrorResume(throwable -> falseMono)
                                         .doFinally(signalType -> ((Mono<Void>) connection.close()).subscribe()));
@@ -107,9 +106,8 @@ public class RoomRepository {
     }
 
     public Flux<String> getUsers(int roomId) {
-        int max_id = keyGenerator.get();
-        if (roomId <= 0 || roomId > max_id) {
-            return errorMono;
+        if (roomId <= 0 || roomId > keyGenerator.get()) {
+            return errorFlux;
         }
         return connectionMysql.flatMapMany(connection ->
                 Flux.from(connection.createStatement(GET_USERS_SQL)
